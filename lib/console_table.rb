@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative('services/csv_table_parser')
 require_relative('services/table_formatter')
 require_relative('services/table_renderer')

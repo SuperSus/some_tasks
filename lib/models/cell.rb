@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'unicode/display_width'
 
 class Cell
@@ -12,7 +14,7 @@ class Cell
   end
 
   def width
-    @width ||= Unicode::DisplayWidth.of(content)
+    @width ||= lines.map { |line| Unicode::DisplayWidth.of(line) }.max
   end
 
   def lines

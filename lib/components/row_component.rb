@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class RowComponent
   attr_reader :cells, :height
 

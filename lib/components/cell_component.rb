@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative('cell_line_component')
 
 class CellComponent
@@ -24,8 +26,8 @@ class CellComponent
     @lines ||= begin
       template = Array.new(height, '')
       fullsized_contents_arr = template
-                                .zip(cell.lines)
-                                .map { |empty_str, content| content || empty_str }
+                               .zip(cell.lines)
+                               .map { |empty_str, content| content || empty_str }
 
       fullsized_contents_arr.map do |content|
         CellLineComponent.new(content, cell_width: width, position: position)

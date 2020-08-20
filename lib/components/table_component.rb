@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require_relative('cell_component')
 require_relative('row_component')
 
@@ -16,14 +18,16 @@ class TableComponent
     buffer = []
 
     buffer << border
-    rows.each { |row| buffer << row.render }
-    buffer << border
+    rows.each do |row|
+      buffer << row.render
+      buffer << border
+    end
 
     buffer.join("\n")
   end
 
   def border
-    '+' + '-' * width + ''
+    column_widths.map { |width| '-' * (width - 1) + '+' }.join
   end
 
   def rows
@@ -34,7 +38,7 @@ class TableComponent
             cell,
             position: :inner,
             height: row_heights[row_index],
-            width: column_widths[column_index] + padding
+            width: column_widths[column_index]
           )
         end
 
@@ -48,7 +52,7 @@ class TableComponent
   end
 
   def column_widths
-    @column_widths ||= table.column_widths.map { |width| width + padding }
+    @column_widths ||= table.column_widths.map { |width| width + padding + 1 }
   end
 
   def row_heights
