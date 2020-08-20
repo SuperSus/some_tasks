@@ -2,10 +2,137 @@ require 'csv'
 require 'pry-nav'
 require 'unicode/display_width'
 
+class CellComponent
+  DEFAULT_STYLES = {
+    padding: 3
+  }.freeze
+
+  attr_reader :content, :position, :width, :height
+
+  def initialize(content, **options)
+    @content = content
+    @position = options.fetch(:position)
+    @width = options.fetch(:width)
+    @height = options.fetch(:height)
+  end
+
+  def render(line_index)
+    lines[line_index].render
+  end
+
+  private
+
+  def lines
+    @lines ||= begin
+      template = Array.new(height, '')
+      contents = content.split("\n")
+      fullsized_contents_arr = template
+                               .zip(contents)
+                               .map { |empty_str, content| content || empty_str }
+
+      fullsized_contents_arr.map do |content|
+        CellLineComponent.new(content, cell_width: width, position: position)
+      end
+    end
+  end
+
+  def line_width(line_index)
+    line = lines[line_index]
+    return 0 if line.nil?
+
+    Unicode::DisplayWidth.of(line)
+  end
+end
+
+class CellLineComponent
+  DEFAULT_STYLES = {
+    padding: 3,
+    space: ' ',
+    border: '|'
+  }.freeze
+
+  attr_reader :content, :position, :cell_width
+
+  def initialize(content, **options)
+    @content = content
+    @position = options.fetch(:position)
+    @cell_width = options.fetch(:cell_width)
+  end
+
+  def render
+    send("render_#{position}")
+  end
+
+  def content_width
+    @content_width ||= Unicode::DisplayWidth.of(content)
+  end
+
+  private
+
+  def render_inner
+    default_render
+  end
+
+  def render_right
+    default_render
+  end
+
+  def render_left
+    "#{border}#{default_render}"
+  end
+
+  def default_render
+    "#{padding}#{aligned_content}#{border}"
+  end
+
+  def aligned_content
+    @aligned_content ||= begin
+      alignment_size = cell_width - (padding.size + content.size + borders_size)
+      alignment = space * alignment_size
+      "#{content}#{alignment}"
+    end
+  end
+
+  def padding
+    @padding ||= DEFAULT_STYLES[:space] * DEFAULT_STYLES[:padding]
+  end
+
+  def borders_size
+    borders_count = position == :left ? 2 : 1
+    border.size * borders_count
+  end
+
+  def space
+    DEFAULT_STYLES[:space]
+  end
+
+  def border
+    DEFAULT_STYLES[:border]
+  end
+end
+
+class RowComponent
+  attr_reader :cells
+
+  def initialize(cells, **options)
+    @cells = build_cells(cells)
+  end
+
+  def build_cells(cells)
+    cells.first
+  end
+end
+
+class ColumnComponent
+end
+
+class TableCOmponent
+end
+
 class Cell
   attr_reader :value
 
-  def initialize(value, options = {})
+  def initialize(value, _options = {})
     @value = value
   end
 
@@ -115,3 +242,5 @@ table = CSV.parse(File.read(filename), headers: true, col_sep: ';')
 formatted_table = TableFormatter.new(table).run
 renderer = TableRenderer.new(formatted_table)
 renderer.run
+
+binding.pry
