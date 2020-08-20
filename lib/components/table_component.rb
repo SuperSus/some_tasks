@@ -25,11 +25,6 @@ class TableComponent
     buffer.join("\n")
   end
 
-  def border
-    border = column_widths.map { |width| '-' * (width - 1) + '+' }.join
-    "+#{border[1..-1]}"
-  end
-
   def rows
     @rows ||= begin
       table.rows.map.with_index do |row, row_index|
@@ -39,6 +34,15 @@ class TableComponent
           height: row_heights[row_index]
         )
       end
+    end
+  end
+
+  def border
+    @border ||= begin
+      spans = column_widths.map do |width|
+        "#{'-' * (width - 1)}+"
+      end
+      "+#{spans.join[1..-1]}"
     end
   end
 
