@@ -7,10 +7,10 @@ class CellComponent
     padding: 3
   }.freeze
 
-  attr_reader :content, :position, :width, :height
+  attr_reader :cell, :position, :height, :width
 
-  def initialize(content, **options)
-    @content = content
+  def initialize(cell, **options)
+    @cell = cell
     @position = options.fetch(:position)
     @width = options.fetch(:width)
     @height = options.fetch(:height)
@@ -25,22 +25,15 @@ class CellComponent
   def lines
     @lines ||= begin
       template = Array.new(height, '')
-      contents = content.split("\n")
+      # contents = cell.lines
       fullsized_contents_arr = template
-                               .zip(contents)
+                               .zip(cell.lines)
                                .map { |empty_str, content| content || empty_str }
 
       fullsized_contents_arr.map do |content|
         CellLineComponent.new(content, cell_width: width, position: position)
       end
     end
-  end
-
-  def line_width(line_index)
-    line = lines[line_index]
-    return 0 if line.nil?
-
-    Unicode::DisplayWidth.of(line)
   end
 end
 
@@ -61,10 +54,6 @@ class CellLineComponent
 
   def render
     send("render_#{position}")
-  end
-
-  def content_width
-    @content_width ||= Unicode::DisplayWidth.of(content)
   end
 
   private
@@ -112,28 +101,111 @@ class CellLineComponent
 end
 
 class RowComponent
-  attr_reader :cells
+  attr_reader :cells, :height
 
-  def initialize(cells, **options)
-    @cells = build_cells(cells)
+  def initialize(cells, height:)
+    @cells = cells
+    @height = height
   end
 
-  def build_cells(cells)
-    cells.first
+  def render
+    height.times.map do |index|
+      cells.map { |cell| cell.render(index) }.join
+    end.join("\n")
   end
 end
 
-class ColumnComponent
-end
+class TableComponent
+  DEFAULT_STYLES = {
+    padding: 3
+  }.freeze
 
-class TableCOmponent
+  attr_reader :table
+
+  def initialize(table)
+    @table = table
+  end
+
+  def render
+    buffer = []
+
+    buffer << border
+    rows.each { |row| buffer << row.render }
+    buffer << border
+
+    buffer.join("\n")
+  end
+
+  def border
+    '+' + '-' * width + ''
+  end
+
+  def rows
+    @rows ||= begin
+      table.rows.map.with_index do |row, row_index|
+        row_cells = row.map.with_index do |cell, column_index|
+          CellComponent.new(
+            cell,
+            position: :inner,
+            height: row_heights[row_index],
+            width: column_widths[column_index] + padding
+          )
+        end
+
+        RowComponent.new(row_cells, height: row_heights[row_index])
+      end
+    end
+  end
+
+  def width
+    @width ||= column_widths.sum
+  end
+
+  def column_widths
+    @column_widths ||= table.column_widths.map { |width| width + padding }
+  end
+
+  def row_heights
+    table.row_heights
+  end
+
+  def padding
+    DEFAULT_STYLES[:padding]
+  end
+end
+class Table
+  attr_reader :table
+
+  def initialize(table)
+    @table = table
+  end
+
+  def rows
+    @rows ||= begin
+      table.map do |row|
+        row.map { |_type, content| Cell.new(content) }
+      end
+    end
+  end
+
+  def columns
+    @columns ||= rows.transpose
+  end
+
+  def column_widths
+    @column_widths ||= columns.map { |column| column.map(&:width).max }
+  end
+
+  def row_heights
+    @row_heights ||= rows.map { |row| row.map(&:height).max }
+  end
 end
 
 class Cell
-  attr_reader :value
+  attr_reader :content
 
-  def initialize(value, _options = {})
-    @value = value
+  def initialize(content, _options = {})
+    @content = content
   end
 
   def height
@@ -141,11 +213,11 @@ class Cell
   end
 
   def width
-    @width ||= Unicode::DisplayWidth.of(value)
+    @width ||= Unicode::DisplayWidth.of(content)
   end
 
   def lines
-    @lines ||= @value.split("\n")
+    @lines ||= @content.split("\n")
   end
 end
 
