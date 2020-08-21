@@ -14,3 +14,6 @@
   <dt>Сгруппировал табличку по <b>ResortName</b> и <b>Travel Method</b></dt>
   <dt>Добавил фильтр для <b>Travel Method</b>, <b>Travel Method</b> == 'Train' OR  <b>Travel Method</b> == 'Plane'<dt>
 </dl>
+
+### 4
+  awk '{ print $1}' access.log | sort | uniq -c | sort -nr | head -n 10
