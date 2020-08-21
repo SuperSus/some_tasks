@@ -2,6 +2,7 @@
 
 require_relative('row_component')
 
+# sorry sorry for magic numbers and other things here and there :)
 class TableComponent
   DEFAULT_STYLES = {
     padding: 3
@@ -24,6 +25,8 @@ class TableComponent
 
     buffer.join("\n")
   end
+
+  private
 
   def rows
     @rows ||= begin
